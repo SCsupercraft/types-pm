@@ -1435,6 +1435,62 @@ declare namespace VM {
     ANSWER: [string];
   }
 
+  /**
+   * A custom type to be used by blocks added by extensions.
+   */
+  interface CustomType<T extends string | undefined> {
+    /**
+     * The id of this custom type, used only to identify this object for serialization.
+     */
+    customId: T;
+
+    /**
+     * Converts this custom type into a human-readable string.
+     */
+    toString(): string;
+
+    /**
+     * Inner content for a script reporter.
+     *
+     * Fallbacks to using `toString` if not present.
+     */
+    toReporterContent?: () => HTMLElement;
+
+    /**
+     * Inner content for a variable monitor.
+     *
+     * Fallbacks to using `toReporterContent` if not present.
+     */
+    toMonitorContent?: () => HTMLElement;
+
+    /**
+     * Inner content for a single list item.
+     *
+     * Fallbacks to using `toMonitorContent` if not present.
+     */
+    toListItem?: () => HTMLElement;
+
+    /**
+     * String-based representation of this type for the list item editor.
+     *
+     * Fallbacks to using `toString` if not present.
+     */
+    toListEditor?: () => String;
+
+    /**
+     * Takes the users edits to the string produced by `toListEditor` and
+     * modifies the custom types content according to the input,
+     * returning the object that should take place of this type.
+     * (normally just self/this)
+     *
+     * If not present, the item will be replaced with the edited string,
+     * removing the custom type.
+     *
+     * @param edit the edited string representing this type
+     */
+    fromListEditor?: (edit: String) => this;
+  }
+
   interface Runtime extends EventEmitter<RuntimeEventMap> {
     // TW
     threadMap: Map<string, Thread>;
@@ -1785,6 +1841,19 @@ declare namespace VM {
     profiler: Profiler | null;
     enableProfiling(callback: (profilerFrame: ProfilerFrame) => void): void;
     disableProfiling(): void;
+
+    /**
+     * Register a serializer for a custom type.
+     *
+     * @param id          the id for the custom type
+     * @param serialize   a function to convert the type into serializable JSON (that can be written in a JSON file)
+     * @param deserialize a function to convert the JSON back into a instance of the type
+     */
+    registerSerializer<T extends CustomType<V>, V extends string>(
+      id: V,
+      serialize: (toSerialize: T) => any,
+      deserialize: (fromSerialize: any) => T,
+    ): void;
   }
 
   interface VirtualMachineEventMap extends RuntimeAndVirtualMachineEventMap {

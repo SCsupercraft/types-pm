@@ -1374,7 +1374,7 @@ declare namespace Scratch {
     color3?: string;
 
     /**
-     * The color of the block text.
+     * The text color used by executable blocks.
      * Should be a hex color code.
      */
     blockText?: string;
