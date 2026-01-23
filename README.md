@@ -12,7 +12,7 @@ npm install penguinmod-types@git+https://github.com/SCsupercraft/types-pm.git#pm
 
 Next, you must use `tsconfig.json` to configure TypeScript to know how to find the types.
 
-```json
+```json5
 {
   "compilerOptions": {
     // If you use require() or "module": "CommonJS", remove these lines.
@@ -42,7 +42,7 @@ Next, you must use `tsconfig.json` to configure TypeScript to know how to find t
 
 For PenguinMod extensions add the following in your `tsconfig.json` file to get access to the `Scratch` global object:
 
-```json
+```json5
 {
   "include": ["./node_modules/penguinmod-types/types/scratch-vm-extension.d.ts"]
 }
@@ -69,8 +69,6 @@ vm.loadProject(/* read a project somehow */ new ArrayBuffer(100)).then(() => {
   vm.greenFlag();
 });
 ```
-
--->
 
 ## Tests
 
