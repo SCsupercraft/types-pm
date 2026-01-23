@@ -38,7 +38,10 @@ declare namespace VM {
   }
   interface AddonBlockOptions {
     procedureCode: string;
-    callback(args: Record<string, string | number | boolean>, util: BlockUtility): void;
+    callback(
+      args: Record<string, string | number | boolean>,
+      util: BlockUtility,
+    ): void;
     arguments: string[];
     hidden?: boolean;
   }
@@ -46,16 +49,149 @@ declare namespace VM {
     namesIdsDefaults: [string[], string[], string[]];
   }
   type Awaitable<T> = T | Promise<T>;
+  /**
+   * Responsible for determining various policies related to custom extension security.
+   * The default implementation prevents automatic extension loading, but grants any
+   * loaded extensions the maximum possible capabilities so as to retain compatibility
+   * with a vanilla scratch-vm. You may override properties of an instance of this class
+   * to customize the security policies as you see fit, for example:
+   * ```js
+   * vm.securityManager.getSandboxMode = (url) => {
+   *   if (url.startsWith("https://example.com/")) {
+   *     return "unsandboxed";
+   *   }
+   *   return "iframe";
+   * };
+   * vm.securityManager.canAutomaticallyLoadExtension = (url) => {
+   *   return confirm("Automatically load extension: " + url);
+   * };
+   * vm.securityManager.canFetch = (url) => {
+   *   return url.startsWith('https://turbowarp.org/');
+   * };
+   * vm.securityManager.canOpenWindow = (url) => {
+   *   return url.startsWith('https://turbowarp.org/');
+   * };
+   * vm.securityManager.canRedirect = (url) => {
+   *   return url.startsWith('https://turbowarp.org/');
+   * };
+   * ```
+   */
   interface SecurityManager {
+    /**
+     * Determine the typeof sandbox to use for a certain custom extension.
+     * @param {string} url The URL of the custom extension.
+     * @returns {Awaitable<'worker' | 'iframe' | 'unsandboxed'>}
+     */
     getSandboxMode(url: string): Awaitable<'worker' | 'iframe' | 'unsandboxed'>;
+
+    /**
+     * Allows last-minute changing the real URL of the extension that gets loaded.
+     * @param {*} extensionURL The URL requested to be loaded.
+     * @returns {Awaitable<string>} The URL to actually load.
+     */
+    rewriteExtensionURL(extensionURL: unknown): Awaitable<string>;
+
+    /**
+     * Determine whether a custom extension that was stored inside a project may be
+     * loaded. You could, for example, ask the user to confirm loading an extension
+     * before resolving.
+     * @param {string} url The URL of the custom extension.
+     * @returns {Awaitable<boolean>}
+     */
     canLoadExtensionFromProject(url: string): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to fetch a remote resource URL.
+     * This only applies to unsandboxed extensions that use the appropriate Scratch.* APIs.
+     * Sandboxed extensions ignore this entirely as there is no way to force them to use our APIs.
+     * data: and blob: URLs are always allowed (this method is never called).
+     * @param {string} url
+     * @returns {Awaitable<boolean>}
+     */
     canFetch(url: string): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to open a new window or tab to a given URL.
+     * This only applies to unsandboxed extensions. Sandboxed extensions are unable to open windows.
+     * javascript: URLs are always rejected (this method is never called).
+     * @param {string} url
+     * @returns {Awaitable<boolean>}
+     */
     canOpenWindow(url: string): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to redirect the current tab to a given URL.
+     * This only applies to unsandboxed extensions. Sandboxed extensions are unable to redirect the parent
+     * window, but are free to redirect their own sandboxed window.
+     * javascript: URLs are always rejected (this method is never called).
+     * @param {string} url
+     * @returns {Awaitable<boolean>}
+     */
     canRedirect(url: string): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to record audio from the user's microphone.
+     * This could include raw audio data or a transcriptions.
+     * Note that, even if this returns true, success is not guaranteed.
+     * @returns {Awaitable<boolean>}
+     */
     canRecordAudio(): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to record video from the user's camera.
+     * Note that, even if this returns true, success is not guaranteed.
+     * @returns {Awaitable<boolean>}
+     */
     canRecordVideo(): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to read values from the user's clipboard
+     * without user interaction.
+     * Note that, even if this returns true, success is not guaranteed.
+     * @returns {Awaitable<boolean>}
+     */
     canReadClipboard(): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to show notifications.
+     * Note that, even if this returns true, success is not guaranteed.
+     * @returns {Awaitable<boolean>}
+     */
     canNotify(): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to find the user's precise location using GPS
+     * and other techniques. Note that, even if this returns true, success is not guaranteed.
+     * @returns {Awaitable<boolean>}
+     */
+    canGeolocate(): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to embed content from a given URL.
+     * @param {string} documentURL The URL of the embed.
+     * @returns {Awaitable<boolean>}
+     */
+    canEmbed(documentURL: string): Awaitable<boolean>;
+
+    /**
+     * pm: Used to prompt the user if they would like to unsandbox a feature in the extension.
+     * @returns {Awaitable<boolean>}
+     */
+    canUnsandbox(): Awaitable<boolean>;
+
+    /**
+     * pm: Used to prompt the user if they would allow screenshotting the camera.
+     * @returns {Awaitable<boolean>}
+     */
+    canScreenshotCamera(): Awaitable<boolean>;
+
+    /**
+     * Determine whether an extension is allowed to download a URL with a given name.
+     * @param {string} resourceURL The URL to download
+     * @param {string} name The name of the fileAdd commentMore actions
+     * @returns {Awaitable<boolean>}
+     */
+    canDownload(resourceURL: string, name: string): Awaitable<boolean>;
   }
   interface FontManagerEvents {
     change: [];
@@ -66,7 +202,7 @@ declare namespace VM {
       system: boolean;
       family: string;
       fallback: string;
-      asset?: ScratchStorage.Asset
+      asset?: ScratchStorage.Asset;
     }>;
     restrictedFonts: Set<string>;
     restrictFont(font: string): void;
@@ -79,26 +215,40 @@ declare namespace VM {
     hasFont(family: string): boolean;
     changed(): void;
     addSystemFont(family: string, fallback: string): void;
-    addCustomFont(family: string, fallback: string, asset: ScratchStorage.Asset): void;
+    addCustomFont(
+      family: string,
+      fallback: string,
+      asset: ScratchStorage.Asset,
+    ): void;
     getFonts(): Array<{
       system: boolean;
       name: string;
       family: string;
-      data: Uint8Array | null,
-      format: string | null
+      data: Uint8Array | null;
+      format: string | null;
     }>;
     deleteFont(index: number): void;
     clear(): void;
     updateRenderer(): void;
     serializeJSON(): unknown;
     serializeAssets(): ScratchStorage.Asset[];
-    deserialize(json: unknown, zip?: JSZip, keepExisting?: boolean): Promise<void>;
+    deserialize(
+      json: unknown,
+      zip?: JSZip,
+      keepExisting?: boolean,
+    ): Promise<void>;
   }
   /**
    * Note that behavior of Infinity, -Infinity, and NaN is undefined.
    * Implementation based on https://github.com/microsoft/TypeScript/pull/33050#issue-484549713
    */
-  type JSONSerializable = string | number | boolean | null | JSONSerializable[] | { [key: string]: JSONSerializable };
+  type JSONSerializable =
+    | string
+    | number
+    | boolean
+    | null
+    | JSONSerializable[]
+    | { [key: string]: JSONSerializable };
   /**
    * Maps extension ID to arbitrary data storage.
    * The data must be JSON-serializable to avoid data loss on serialization and deserialization.
@@ -253,7 +403,7 @@ declare namespace VM {
       // Argument name
       string[],
       // Argument IDs
-      string[]
+      string[],
     ];
 
     getProcedureParamNamesIdsAndDefaults(procedureCode: string): [
@@ -262,7 +412,7 @@ declare namespace VM {
       // Argument IDs
       string[],
       // Argument defaults
-      unknown[]
+      unknown[],
     ];
 
     duplicate(): Blocks;
@@ -292,7 +442,7 @@ declare namespace VM {
   const enum VariableType {
     Scalar = '',
     List = 'list',
-    Broadcast = 'broadcast_msg'
+    Broadcast = 'broadcast_msg',
   }
 
   interface ScalarVariable extends BaseVariable {
@@ -344,7 +494,7 @@ declare namespace VM {
     Tenor = 'TENOR',
     Squeak = 'SQUEAK',
     Giant = 'GIANT',
-    Kitten = 'KITTEN'
+    Kitten = 'KITTEN',
   }
 
   interface CustomState {
@@ -402,7 +552,16 @@ declare namespace VM {
 
     comments: Record<string, Comment>;
 
-    createComment(id: string, blockId: string, text: string, x: number, y: number, width: number, height: number, minimized?: boolean): void;
+    createComment(
+      id: string,
+      blockId: string,
+      text: string,
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+      minimized?: boolean,
+    ): void;
 
     /**
      * Called by runtime when the green flag is pressed.
@@ -425,9 +584,21 @@ declare namespace VM {
     lookupVariableById(id: string): Variable | undefined;
 
     lookupVariableByNameAndType(name: string): ScalarVariable | undefined;
-    lookupVariableByNameAndType(name: string, type: '', skipStage?: boolean): ScalarVariable | undefined;
-    lookupVariableByNameAndType(name: string, type: 'list', skipStage?: boolean): ListVariable | undefined;
-    lookupVariableByNameAndType(name: string, type: 'broadcast_msg', skipStage?: boolean): BroadcastVariable | undefined;
+    lookupVariableByNameAndType(
+      name: string,
+      type: '',
+      skipStage?: boolean,
+    ): ScalarVariable | undefined;
+    lookupVariableByNameAndType(
+      name: string,
+      type: 'list',
+      skipStage?: boolean,
+    ): ListVariable | undefined;
+    lookupVariableByNameAndType(
+      name: string,
+      type: 'broadcast_msg',
+      skipStage?: boolean,
+    ): BroadcastVariable | undefined;
 
     lookupOrCreateList(id: string, name: string): ListVariable;
 
@@ -435,11 +606,21 @@ declare namespace VM {
      * Create a new variable. If the ID is already used, silently does nothing.
      * isCloud is ignored if the sprite is not the stage or if the cloud variable limit has been reached.
      */
-    createVariable(id: string, name: string, type: VariableType, isCloud?: boolean): void;
+    createVariable(
+      id: string,
+      name: string,
+      type: VariableType,
+      isCloud?: boolean,
+    ): void;
 
     _customState: Partial<CustomState>;
-    getCustomState<T extends keyof CustomState>(name: T): CustomState[T] | undefined;
-    setCustomState<T extends keyof CustomState>(name: T, value: CustomState[T]): void;
+    getCustomState<T extends keyof CustomState>(
+      name: T,
+    ): CustomState[T] | undefined;
+    setCustomState<T extends keyof CustomState>(
+      name: T,
+      value: CustomState[T],
+    ): void;
 
     /**
      * Mirrors custom state.
@@ -454,7 +635,7 @@ declare namespace VM {
   const enum RotationStyle {
     AllAround = 'all-around',
     LeftRight = 'left-right',
-    None = "don't rotate"
+    None = "don't rotate",
   }
 
   interface RenderedTargetEventMap {
@@ -471,7 +652,7 @@ declare namespace VM {
     Pixelate = 'pixelate',
     Mosaic = 'mosaic',
     Brightness = 'brightness',
-    Ghost = 'ghost'
+    Ghost = 'ghost',
   }
 
   /**
@@ -510,7 +691,11 @@ declare namespace VM {
      */
     setXY(x: number, y: number, force?: boolean): void;
 
-    keepInFence(newX: number, newY: number, fence?: SimpleRectangle): [number, number];
+    keepInFence(
+      newX: number,
+      newY: number,
+      fence?: SimpleRectangle,
+    ): [number, number];
 
     /**
      * Direction in degrees. Defaults to 90 (right). Can be from -179 to 180.
@@ -651,7 +836,10 @@ declare namespace VM {
      * @param rgb RGB channels from [0-255]
      * @param mask RGB channels from [0-255]
      */
-    colorIsTouchingColor(rgb: [number, number, number], mask: [number, number, number]): boolean;
+    colorIsTouchingColor(
+      rgb: [number, number, number],
+      mask: [number, number, number],
+    ): boolean;
 
     getLayerOrder(): IfRenderer<number, null>;
 
@@ -688,7 +876,6 @@ declare namespace VM {
     tempo: number;
 
     videoTransparency: number;
-
 
     /**
      * Create a clone of this sprite if the clone limit has not been reached.
@@ -738,7 +925,7 @@ declare namespace VM {
     _nowObj: {
       now(): number;
     };
-    nowObj: BlockUtility['_nowObj'],
+    nowObj: BlockUtility['_nowObj'];
     target: Target;
     runtime: Runtime;
     stackFrame: StackFrame;
@@ -785,7 +972,11 @@ declare namespace VM {
      * @see {Runtime.startHats}
      */
     startHats: Runtime['startHats'];
-    ioQuery<Device extends keyof IODevices>(device: Device, func: keyof IODevices[Device], args: unknown[]): unknown;
+    ioQuery<Device extends keyof IODevices>(
+      device: Device,
+      func: keyof IODevices[Device],
+      args: unknown[],
+    ): unknown;
   }
 
   const enum ThreadStatus {
@@ -793,7 +984,7 @@ declare namespace VM {
     STATUS_PROMISE_WAIT = 1,
     STATUS_YIELD = 2,
     STATUS_YIELD_TICK = 3,
-    STATUS_DONE = 4
+    STATUS_DONE = 4,
   }
 
   interface Thread {
@@ -1086,27 +1277,37 @@ declare namespace VM {
     INTERPOLATION_CHANGED: [boolean];
     STAGE_SIZE_CHANGED: [number, number];
     COMPILE_ERROR: [Target, unknown];
-    
-    SCRIPT_GLOW_ON: [{
-      id: string;
-    }];
 
-    SCRIPT_GLOW_OFF: [{
-      id: string;
-    }];
+    SCRIPT_GLOW_ON: [
+      {
+        id: string;
+      },
+    ];
 
-    BLOCK_GLOW_ON: [{
-      id: string;
-    }];
+    SCRIPT_GLOW_OFF: [
+      {
+        id: string;
+      },
+    ];
 
-    BLOCK_GLOW_OFF: [{
-      id: string
-    }];
+    BLOCK_GLOW_ON: [
+      {
+        id: string;
+      },
+    ];
 
-    PROJECT_START: [{
-      id: string;
-      value: string;
-    }];
+    BLOCK_GLOW_OFF: [
+      {
+        id: string;
+      },
+    ];
+
+    PROJECT_START: [
+      {
+        id: string;
+        value: string;
+      },
+    ];
 
     PROJECT_RUN_START: [];
 
@@ -1114,31 +1315,35 @@ declare namespace VM {
 
     PROJECT_CHANGED: [];
 
-    VISUAL_REPORT: [{
-      id: string;
-      value: string;
-    }];
+    VISUAL_REPORT: [
+      {
+        id: string;
+        value: string;
+      },
+    ];
 
     MONITORS_UPDATE: [OrderedMap];
 
     BLOCK_DRAG_UPDATE: [
       // Are blocks over GUI?
-      boolean
+      boolean,
     ];
 
     BLOCK_DRAG_END: [
       // Blocks being dragged to the GUI
       unknown[],
       // Original ID of top block being dragged
-      string
+      string,
     ];
 
     EXTENSION_ADDED: [ExtensionInfo];
 
-    EXTENSION_FIELD_ADDED: [{
-      name: string;
-      implementation: unknown;
-    }];
+    EXTENSION_FIELD_ADDED: [
+      {
+        name: string;
+        implementation: unknown;
+      },
+    ];
 
     BLOCKSINFO_UPDATE: [ExtensionInfo];
 
@@ -1152,21 +1357,25 @@ declare namespace VM {
 
     PERIPHERAL_DISCONNECTED: [];
 
-    PERIPHERAL_REQUEST_ERROR: [{
-      message: string;
-      extensionId: string;
-    }];
+    PERIPHERAL_REQUEST_ERROR: [
+      {
+        message: string;
+        extensionId: string;
+      },
+    ];
 
-    PERIPHERAL_CONNECTION_LOST_ERROR: [{
-      message: string;
-      extensionId: string;
-    }];
+    PERIPHERAL_CONNECTION_LOST_ERROR: [
+      {
+        message: string;
+        extensionId: string;
+      },
+    ];
 
     PERIPHERAL_SCAN_TIMEOUT: [];
 
     MIC_LISTENING: [
       // Is the mic listening?
-      boolean
+      boolean,
     ];
 
     RUNTIME_STARTED: [];
@@ -1175,7 +1384,7 @@ declare namespace VM {
 
     HAS_CLOUD_DATA_UPDATE: [
       // Has cloud data?
-      boolean
+      boolean,
     ];
   }
 
@@ -1191,8 +1400,10 @@ declare namespace VM {
     STOP_FOR_TARGET: [
       // Target whose scripts are being stopped
       Target,
-      // Optional thread exception to keep running
-      Thread | undefined
+      (
+        // Optional thread exception to keep running
+        Thread | undefined
+      ),
     ];
 
     PROJECT_LOADED: [];
@@ -1201,7 +1412,7 @@ declare namespace VM {
 
     TARGETS_UPDATE: [
       // Whether to emit project changed
-      boolean
+      boolean,
     ];
 
     BLOCKS_NEED_UPDATE: [];
@@ -1212,7 +1423,7 @@ declare namespace VM {
       // The new target
       Target,
       // The original target, if any. This will be set for clones.
-      Target?
+      Target?,
     ];
 
     targetWasRemoved: [Target];
@@ -1316,7 +1527,9 @@ declare namespace VM {
 
     v2BitmapAdapter?: ScratchSVGRenderer.BitmapAdapter;
 
-    attachV2BitmapAdapter(bitmapAdapter: ScratchSVGRenderer.BitmapAdapter): void;
+    attachV2BitmapAdapter(
+      bitmapAdapter: ScratchSVGRenderer.BitmapAdapter,
+    ): void;
 
     storage: IfGui<GUIScratchStorage, ScratchStorage>;
 
@@ -1374,10 +1587,14 @@ declare namespace VM {
 
     threads: Thread[];
 
-    _pushThread(topBlockId: string, target: Target, options?: {
-      stackClick?: boolean;
-      updateMonitor?: boolean;
-    }): Thread;
+    _pushThread(
+      topBlockId: string,
+      target: Target,
+      options?: {
+        stackClick?: boolean;
+        updateMonitor?: boolean;
+      },
+    ): Thread;
 
     _stopThread(thread: Thread): void;
 
@@ -1399,16 +1616,30 @@ declare namespace VM {
 
     _getMonitorThreadCount(threads: Thread[]): number;
 
-    startHats(opcode: string, matchFields?: Record<string, unknown>, target?: Target): Thread[] | undefined;
+    startHats(
+      opcode: string,
+      matchFields?: Record<string, unknown>,
+      target?: Target,
+    ): Thread[] | undefined;
 
-    toggleScript(topBlockId: string, options?: {
-      target?: string;
-      stackClick?: boolean;
-    }): void;
+    toggleScript(
+      topBlockId: string,
+      options?: {
+        target?: string;
+        stackClick?: boolean;
+      },
+    ): void;
 
-    allScriptsDo(callback: (blockId: string, target: Target) => void, target?: Target): void;
+    allScriptsDo(
+      callback: (blockId: string, target: Target) => void,
+      target?: Target,
+    ): void;
 
-    allScriptsByOpcodeDo(opcode: string, callback: (script: RuntimeScriptCache, target: Target) => void, target?: Target): void;
+    allScriptsByOpcodeDo(
+      opcode: string,
+      callback: (script: RuntimeScriptCache, target: Target) => void,
+      target?: Target,
+    ): void;
 
     sequencer: Sequencer;
 
@@ -1423,10 +1654,12 @@ declare namespace VM {
 
     getOpcodeFunction(opcode: string): Function;
 
-    getLabelForOpcode(opcode: string): {
-      category: 'extension';
-      label: string;
-    } | undefined;
+    getLabelForOpcode(opcode: string):
+      | {
+          category: 'extension';
+          label: string;
+        }
+      | undefined;
 
     getBlocksXML(target?: Target): Array<{
       id: string;
@@ -1497,10 +1730,25 @@ declare namespace VM {
     removeCloudVariable(): void;
 
     createNewGlobalVariable(variableName: string): ScalarVariable;
-    createNewGlobalVariable(variableName: string, variableId: string): ScalarVariable;
-    createNewGlobalVariable(variableName: string, variableId: string, type: ''): ScalarVariable;
-    createNewGlobalVariable(variableName: string, variableId: string, type: 'list'): ListVariable;
-    createNewGlobalVariable(variableName: string, variableId: string, type: 'broadcast_msg'): BroadcastVariable;
+    createNewGlobalVariable(
+      variableName: string,
+      variableId: string,
+    ): ScalarVariable;
+    createNewGlobalVariable(
+      variableName: string,
+      variableId: string,
+      type: '',
+    ): ScalarVariable;
+    createNewGlobalVariable(
+      variableName: string,
+      variableId: string,
+      type: 'list',
+    ): ListVariable;
+    createNewGlobalVariable(
+      variableName: string,
+      variableId: string,
+      type: 'broadcast_msg',
+    ): BroadcastVariable;
 
     getAllVarNamesOfType(variableType: VariableType): string[];
 
@@ -1544,27 +1792,35 @@ declare namespace VM {
 
     TURBO_MODE_OFF: [];
 
-    targetsUpdate: [{
-      targetList: SerializedTarget[];
-      editingTarget: string | null;
-    }];
+    targetsUpdate: [
+      {
+        targetList: SerializedTarget[];
+        editingTarget: string | null;
+      },
+    ];
 
-    workspaceUpdate: [{
-      xml: string;
-    }];
+    workspaceUpdate: [
+      {
+        xml: string;
+      },
+    ];
 
-    playgroundData: [{
-      blocks: Blocks;
-      // Stringified JSON of Thread[]
-      thread: string;
-    }];
+    playgroundData: [
+      {
+        blocks: Blocks;
+        // Stringified JSON of Thread[]
+        thread: string;
+      },
+    ];
   }
 }
 
 declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
   // TW
   saveProjectSb3Stream(): JSZip.StreamHelper<'arraybuffer'>;
-  saveProjectSb3Stream<T extends keyof JSZip.OutputTypes>(type: T): JSZip.StreamHelper<T>;
+  saveProjectSb3Stream<T extends keyof JSZip.OutputTypes>(
+    type: T,
+  ): JSZip.StreamHelper<T>;
   saveProjectSb3DontZip(): Record<string, Uint8Array>;
   stop(): void;
   setFramerate(framerate: number): void;
@@ -1583,11 +1839,11 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
   securityManager: VM.SecurityManager;
   exports: {
     Sprite: {
-      new(blocks: VM.Blocks | null, runtime: VM.Runtime): VM.Sprite;
+      new (blocks: VM.Blocks | null, runtime: VM.Runtime): VM.Sprite;
     };
     RenderedTarget: {
-      new(sprite: VM.Sprite, runtime: VM.Runtime): VM.RenderedTarget;
-    }
+      new (sprite: VM.Sprite, runtime: VM.Runtime): VM.RenderedTarget;
+    };
   };
 
   constructor();
@@ -1666,7 +1922,9 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
    * Load a project.
    * @param input Compressed sb, sb2, sb3 or sb2 project.json or sb3 project.json.
    */
-  loadProject(input: ArrayBufferView | ArrayBuffer | string | object): Promise<void>;
+  loadProject(
+    input: ArrayBufferView | ArrayBuffer | string | object,
+  ): Promise<void>;
 
   /**
    * Load a project usings its ID from scratch.mit.edu.
@@ -1675,19 +1933,27 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
 
   deserializeProject(json: object, zip?: JSZip): Promise<void>;
 
-  installTargets(targets: VM.Target[], extensions: VM.ImportedExtensionsInfo, wholeProject: boolean): Promise<void>;
+  installTargets(
+    targets: VM.Target[],
+    extensions: VM.ImportedExtensionsInfo,
+    wholeProject: boolean,
+  ): Promise<void>;
 
   /**
    * @deprecated
    * @see {loadProject}
    */
-  fromJSON(input: ArrayBufferView | ArrayBuffer | string | object): Promise<void>;
+  fromJSON(
+    input: ArrayBufferView | ArrayBuffer | string | object,
+  ): Promise<void>;
 
   /**
    * the project to a compressed sb3 file.
    */
   // TW
-  saveProjectSb3<T extends keyof JSZip.OutputTypes>(type: T): Promise<JSZip.OutputTypes[T]>;
+  saveProjectSb3<T extends keyof JSZip.OutputTypes>(
+    type: T,
+  ): Promise<JSZip.OutputTypes[T]>;
   saveProjectSb3(): Promise<Blob>;
 
   toJSON(targetId?: string): string;
@@ -1709,9 +1975,16 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
    * Updates the value of a variable.
    * Returns true if the target and variable were successfully found and updated, otherwise null.
    */
-  setVariableValue(targetId: string, variableId: string, value: VM.VariableValue): boolean;
+  setVariableValue(
+    targetId: string,
+    variableId: string,
+    value: VM.VariableValue,
+  ): boolean;
 
-  getVariableValue(targetId: string, variableId: string): VM.VariableValue | null;
+  getVariableValue(
+    targetId: string,
+    variableId: string,
+  ): VM.VariableValue | null;
 
   assets: ScratchStorage.Asset[];
 
@@ -1735,9 +2008,16 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
   /**
    * Loads a sprite from a compressed .sprite2 or .sprite3 or JSON.
    */
-  addSprite(data: ArrayBufferView | ArrayBuffer | string | object): Promise<void>;
+  addSprite(
+    data: ArrayBufferView | ArrayBuffer | string | object,
+  ): Promise<void>;
 
-  addCostume(md5ext: string, costume?: VM.Costume, targetId?: string, version?: 2): Promise<void>;
+  addCostume(
+    md5ext: string,
+    costume?: VM.Costume,
+    targetId?: string,
+    version?: 2,
+  ): Promise<void>;
 
   addCostumeFromLibrary(md5ext: string, costume: VM.Costume): Promise<void>;
 
@@ -1751,9 +2031,20 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
 
   duplicateSound(soundIndex: number): Promise<void>;
 
-  updateSvg(costumeIndex: number, svg: string, rotationCenterX: number, rotationCenterY: number): void;
+  updateSvg(
+    costumeIndex: number,
+    svg: string,
+    rotationCenterX: number,
+    rotationCenterY: number,
+  ): void;
 
-  updateBitmap(costumeIndex: number, bitmap: ImageData, rotationCenterX: number, rotationCenterY: number, bitmapResolution: number): void;
+  updateBitmap(
+    costumeIndex: number,
+    bitmap: ImageData,
+    rotationCenterX: number,
+    rotationCenterY: number,
+    bitmapResolution: number,
+  ): void;
 
   /**
    * Update a sound.
@@ -1761,11 +2052,19 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
    * @param buffer The new audio data
    * @param encodedWAV The data of an encoded WAV. If not provided, the new sound won't be saved if the project is exported.
    */
-  updateSoundBuffer(soundIndex: number, buffer: AudioBuffer, encodedWAV?: ArrayBuffer): void;
+  updateSoundBuffer(
+    soundIndex: number,
+    buffer: AudioBuffer,
+    encodedWAV?: ArrayBuffer,
+  ): void;
 
   reorderTarget(targetId: string, newIndex: number): boolean;
 
-  reorderCostume(targetId: string, costumeIndex: number, newIndex: number): boolean;
+  reorderCostume(
+    targetId: string,
+    costumeIndex: number,
+    newIndex: number,
+  ): boolean;
 
   reorderSound(targetId: string, soundIndex: number, newIndex: number): boolean;
 
@@ -1796,7 +2095,11 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
   /**
    * Returns a promise that resolves when all required extensions have been imported.
    */
-  shareBlocksToTarget(blocks: VM.Block[], targetId: string, fromTargetId?: string): Promise<void>;
+  shareBlocksToTarget(
+    blocks: VM.Block[],
+    targetId: string,
+    fromTargetId?: string,
+  ): Promise<void>;
 
   /**
    * Share a costume from the editing target to another target.
@@ -1817,8 +2120,8 @@ declare class VM extends EventEmitter<VM.VirtualMachineEventMap> {
   emitTargetsUpdate(shouldTriggerProjectChange?: boolean): void;
 
   /**
-  * Emit a workspaceUpdate event.
-  */
+   * Emit a workspaceUpdate event.
+   */
   emitWorkspaceUpdate(): void;
 
   /**

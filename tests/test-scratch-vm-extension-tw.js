@@ -1,9 +1,9 @@
-(function(Scratch) {
+(function (Scratch) {
   'use strict';
 
   class Fetch {
     /** @returns {Scratch.Info} */
-    getInfo () {
+    getInfo() {
       return {
         id: 'fetch',
         name: 'Fetch',
@@ -15,20 +15,20 @@
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'https://extensions.turbowarp.org/hello.txt'
-              }
-            }
-          }
-        ]
+                defaultValue: 'https://extensions.turbowarp.org/hello.txt',
+              },
+            },
+          },
+        ],
       };
     }
 
     /**
      * @param {{URL: string;}} args
      */
-    get (args) {
+    get(args) {
       return Scratch.fetch(Scratch.Cast.toString(args.URL))
-        .then(r => r.text())
+        .then((r) => r.text())
         .catch(() => '');
     }
   }
@@ -36,10 +36,10 @@
   Scratch.extensions.register(new Fetch());
 })(Scratch);
 
-(function(Scratch) {
+(function (Scratch) {
   'use strict';
   class Test {
-    getInfo () {
+    getInfo() {
       return {
         id: 'testbutton',
         name: 'test 123',
@@ -48,17 +48,17 @@
           {
             blockType: Scratch.BlockType.BUTTON,
             func: 'MAKE_A_VARIABLE',
-            text: 'Make variable'
+            text: 'Make variable',
           },
           {
             blockType: Scratch.BlockType.BUTTON,
             text: ':)',
-            func: 'hello'
-          }
-        ]
+            func: 'hello',
+          },
+        ],
       };
     }
-    async hello () {
+    async hello() {
       Scratch.canOpenWindow('https://example.com/').then((allowed) => {
         if (allowed === true) {
           // ...
@@ -73,7 +73,7 @@
   Scratch.extensions.register(new Test());
 })(Scratch);
 
-(function(Scratch) {
+(function (Scratch) {
   'use strict';
   class Test {
     getInfo() {
@@ -83,7 +83,7 @@
         blocks: [
           {
             blockType: Scratch.BlockType.LABEL,
-            text: 'test 123 :) <>&%"'
+            text: 'test 123 :) <>&%"',
           },
           {
             blockType: Scratch.BlockType.COMMAND,
@@ -91,19 +91,17 @@
             opcode: 'test',
             arguments: {
               SOUND: {
-                type: Scratch.ArgumentType.SOUND
+                type: Scratch.ArgumentType.SOUND,
               },
               COSTUME: {
-                type: Scratch.ArgumentType.COSTUME
-              }
-            }
-          }
-        ]
+                type: Scratch.ArgumentType.COSTUME,
+              },
+            },
+          },
+        ],
       };
     }
-    test () {
-
-    }
+    test() {}
   }
   Scratch.extensions.register(new Test());
 })(Scratch);
@@ -136,8 +134,8 @@ if (typeof scaffolding !== 'undefined') {
 
 Scratch.fetch('https://example.com', {
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 Scratch.gui.getBlockly().then((ScratchBlocks) => {
@@ -149,35 +147,33 @@ Scratch.gui.getBlocklyEagerly().then((ScratchBlocks) => {
   ScratchBlocks.Workspace;
 });
 
-Scratch.vm.runtime.fontManager.on('change', () => {
-
-});
+Scratch.vm.runtime.fontManager.on('change', () => {});
 
 Scratch.extensions.register({
   getInfo() {
     return {
       id: 'AshimeeShapeTestThing',
       name: 'AshimeeShapeTestThing',
-      blocks: [{
-        blockType: Scratch.BlockType.REPORTER,
-        blockShape: Scratch.BlockShape.HEXAGONAL,
-        opcode: 'hexagonal', text: 'im a reporter',
-      }, {
-        blockType: Scratch.BlockType.BOOLEAN,
-        blockShape: Scratch.BlockShape.ROUND,
-        opcode: 'round', text: 'im a boolean',
-      }, {
-        blockType: Scratch.BlockType.REPORTER,
-        blockShape: Scratch.BlockShape.SQUARE,
-        opcode: 'square', text: 'im a reporter (but square)',
-      }],
+      blocks: [
+        {
+          blockType: Scratch.BlockType.REPORTER,
+          blockShape: Scratch.BlockShape.HEXAGONAL,
+          opcode: 'hexagonal',
+          text: 'im a reporter',
+        },
+        {
+          blockType: Scratch.BlockType.BOOLEAN,
+          blockShape: Scratch.BlockShape.ROUND,
+          opcode: 'round',
+          text: 'im a boolean',
+        },
+        {
+          blockType: Scratch.BlockType.REPORTER,
+          blockShape: Scratch.BlockShape.SQUARE,
+          opcode: 'square',
+          text: 'im a reporter (but square)',
+        },
+      ],
     };
-  }
+  },
 });
-
-Scratch.external.importModule(
-  "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/face_detection.js"
-);
-Scratch.external.blob(
-  "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4.1646425229/face_detection_short.binarypb"
-);

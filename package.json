@@ -1,9 +1,10 @@
 {
-  "name": "@turbowarp/types",
+  "name": "penguinmod-types",
   "version": "0.0.14",
-  "description": "Type definitions for the Scratch VM and editor",
+  "description": "Type definitions for the PenguinMod VM and editor",
   "keywords": [
-    "scratch"
+    "scratch",
+    "penguinmod"
   ],
   "main": "",
   "types": "index.d.ts",
@@ -17,14 +18,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TurboWarp/types.git"
+    "url": "git+https://github.com/SCsupercraft/types-pm.git"
   },
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/TurboWarp/types/issues"
+    "url": "https://github.com/SCsupercraft/types-pm/issues"
   },
-  "homepage": "https://github.com/TurboWarp/types#readme",
+  "funding": "https://ko-fi.com/scsupercraft",
+  "homepage": "https://github.com/SCsupercraft/types-pm#readme",
   "devDependencies": {
     "typedoc": "^0.28.15",
     "typescript": "^5.9.3"
