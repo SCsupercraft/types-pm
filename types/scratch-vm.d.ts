@@ -1860,8 +1860,8 @@ declare namespace VM {
      */
     registerSerializer<T extends SerializableCustomType<V>, V extends string>(
       id: T['customId'],
-      serialize: (toSerialize: T) => any,
-      deserialize: (fromSerialize: any) => T,
+      serialize: (toSerialize: T) => JSONSerializable,
+      deserialize: (fromSerialize: JSONSerializable) => T,
     ): void;
   }
 
