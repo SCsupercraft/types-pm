@@ -1437,13 +1437,22 @@ declare namespace VM {
 
   /**
    * A custom type to be used by blocks added by extensions.
+   *
+   * Can be serialized. Serializers must be registered through the Scratch Runtime.
    */
-  interface CustomType<T extends string | undefined> {
+  interface SerializableCustomType<T extends string> extends CustomType {
     /**
      * The id of this custom type, used only to identify this object for serialization.
+     *
+     * @type must be a string literal
      */
-    customId: T;
+    customId: string extends T ? never : T;
+  }
 
+  /**
+   * A custom type to be used by blocks added by extensions.
+   */
+  interface CustomType {
     /**
      * Converts this custom type into a human-readable string.
      */
@@ -1849,8 +1858,8 @@ declare namespace VM {
      * @param serialize   a function to convert the type into serializable JSON (that can be written in a JSON file)
      * @param deserialize a function to convert the JSON back into a instance of the type
      */
-    registerSerializer<T extends CustomType<V>, V extends string>(
-      id: V,
+    registerSerializer<T extends SerializableCustomType<V>, V extends string>(
+      id: T['customId'],
       serialize: (toSerialize: T) => any,
       deserialize: (fromSerialize: any) => T,
     ): void;

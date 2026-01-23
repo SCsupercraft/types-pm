@@ -18,33 +18,36 @@ const sprite = new Sprite(null, vm.runtime);
 const target = new RenderedTarget(sprite, vm.runtime);
 target.setXY(10, 10);
 
-Scratch.translate("enter AR mode") as string;
+Scratch.translate('enter AR mode') as string;
+Scratch.translate(
+  {
+    id: 'test1',
+    default: 'Message 1: {var}',
+    description: 'Description',
+  },
+  {
+    var: 'test',
+  },
+) as string;
 Scratch.translate({
-  id: 'test1',
-  default: 'Message 1: {var}',
-  description: 'Description'
-}, {
-  var: 'test'
-}) as string;
-Scratch.translate({
-  id: "sync",
-  default: "Change the location of [STR] to [STR2]",
+  id: 'sync',
+  default: 'Change the location of [STR] to [STR2]',
 }) as string;
 
 Scratch.translate.setup({
   it: {
-    addValueInList: "xyz [VALUE] fgh [LIST]",
-    clearList: "!!! [LIST]"
+    addValueInList: 'xyz [VALUE] fgh [LIST]',
+    clearList: '!!! [LIST]',
   },
-  "zh-cn":{
-    copyList: "aaa [LIST1] bbb [LIST2]",
-    name: "ccc"
-  }
+  'zh-cn': {
+    copyList: 'aaa [LIST1] bbb [LIST2]',
+    name: 'ccc',
+  },
 });
 
 target.extensionStorage['stretch'] = '';
 target.extensionStorage['stretch'] = ['a'];
-target.extensionStorage['stretch'] = {b: 'a'};
+target.extensionStorage['stretch'] = { b: 'a' };
 target.extensionStorage['stretch'] = [
   {
     b: [
@@ -56,12 +59,12 @@ target.extensionStorage['stretch'] = [
       [
         {
           a: {
-            b: 'c'
-          }
-        }
-      ]
-    ]
-  }
+            b: 'c',
+          },
+        },
+      ],
+    ],
+  },
 ];
 vm.runtime.extensionStorage['a'] = 'b';
 
@@ -70,3 +73,21 @@ promptResult as Promise<string>;
 promptResult as Promise<null>;
 promptResult as string;
 promptResult as null;
+
+class CustomType implements VM.SerializableCustomType<'myType'> {
+  customId: 'myType' = 'myType';
+
+  toString(): string {
+    return '<MyType>';
+  }
+}
+
+vm.runtime.registerSerializer<CustomType, 'myType'>(
+  'myType',
+  (type) => {
+    return {};
+  },
+  (data) => {
+    return new CustomType();
+  },
+);
