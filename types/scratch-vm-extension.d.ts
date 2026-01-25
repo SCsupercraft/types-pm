@@ -246,7 +246,13 @@ declare namespace Scratch {
      */
     function isInt(value: unknown): boolean;
 
+    /**
+     * Returned if the index was invalid in any way.
+     */
     const LIST_INVALID = 'INVALID';
+    /**
+     * Returned if the block is referring to all of the items in the list.
+     */
     const LIST_ALL = 'ALL';
 
     /**
@@ -843,6 +849,10 @@ declare namespace Scratch {
      */
     defaultSize?: number;
   }
+
+  /**
+   * Represents an argument for a block.
+   */
   type Argument =
     | CustomArgument
     | SeparatorArgument
@@ -909,12 +919,22 @@ declare namespace Scratch {
     createArguments?: Record<string, string>;
   }
 
+  /**
+   * Rendered as text in the toolbox.
+   */
   interface LabelBlock extends AbstractBlock {
     blockType: 'label';
   }
 
+  /**
+   * Arbitrary scratch-blocks XML.
+   */
   interface XMLBlock extends AbstractBlock {
     blockType: 'xml';
+
+    /**
+     * Arbitrary scratch-blocks XML that defines this block.
+     */
     xml: string;
   }
 
@@ -927,6 +947,9 @@ declare namespace Scratch {
     filter?: Array<'target' | 'sprite'>;
   }
 
+  /**
+   * An interface representing any executable block.
+   */
   interface ExecutableBlock extends AbstractBlock {
     /**
      * Defines the unique id of this block.
@@ -1281,6 +1304,9 @@ declare namespace Scratch {
     branchIconURI?: string | null;
   }
 
+  /**
+   * Represents a block available in the toolbox.
+   */
   type Block =
     | LabelBlock
     | XMLBlock
@@ -1293,8 +1319,14 @@ declare namespace Scratch {
     | ReporterBlock
     | LoopBlock;
 
+  /**
+   * Used to separate blocks in the toolbox.
+   */
   type Separator = '---';
 
+  /**
+   * An interface that represents a menu.
+   */
   interface Menu {
     /**
      * Determines if reporters can be put into this menu.
@@ -1343,6 +1375,9 @@ declare namespace Scratch {
     implementation: any;
   }
 
+  /**
+   * An object used to describe an extension.
+   */
   type Info = {
     /**
      * A unique extension ID.
@@ -1428,11 +1463,23 @@ declare namespace Scratch {
     menus?: Record<string, Menu | string[]>;
   };
 
+  /**
+   * An interface representing an extension.
+   */
   interface Extension {
     getInfo(): Info;
   }
 
+  /**
+   * Contains a method for registering an extension,
+   * and properties describing the current environment
+   */
   namespace extensions {
+    /**
+     * Register a new extension.
+     *
+     * @param extensionObject the extension object
+     */
     function register(extensionObject: Extension): void;
 
     /**
