@@ -1337,6 +1337,7 @@ declare namespace VM {
     ];
 
     EXTENSION_ADDED: [ExtensionInfo];
+    EXTENSION_REMOVED: [string];
 
     EXTENSION_FIELD_ADDED: [
       {
