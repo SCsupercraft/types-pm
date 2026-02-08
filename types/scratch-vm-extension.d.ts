@@ -1467,7 +1467,15 @@ declare namespace Scratch {
    * An interface representing an extension.
    */
   interface Extension {
+    /**
+     * Returns information about this extension.
+     */
     getInfo(): Info;
+
+    /**
+     * Called when this extension is removed.
+     */
+    dispose(): void;
   }
 
   /**
