@@ -425,17 +425,17 @@ declare namespace Scratch {
     const TICKET: 'ticket';
 
     /**
-     * Doesn't really coresspond to any data type
+     * Doesn't really correspond to any data type
      */
     const JIGSAW: 'jigsaw';
 
     /**
-     * Doesn't really coresspond to any data type
+     * Doesn't really correspond to any data type
      */
     const INVERTED: 'inverted';
 
     /**
-     * Doesn't really coresspond to any data type
+     * Doesn't really correspond to any data type
      */
     const PINCER: 'pincer';
   }
@@ -632,7 +632,7 @@ declare namespace Scratch {
     const BUTTON: 'button';
 
     /**
-     * A text label (not an actual block) for adding comments or labling blocks
+     * A text label (not an actual block) for adding comments or labeling blocks
      */
     const LABEL: 'label';
 
@@ -690,8 +690,14 @@ declare namespace Scratch {
     const STAGE: 'stage';
   }
 
-  interface AbstractArgument<T extends string> {
+  interface AbstractArgument<T extends string | undefined> {
     type: T;
+  }
+  interface NormalizedArgument {
+    /**
+     * If this input should be automatically casted to the inputs type.
+     */
+    exemptFromNormalization?: boolean;
   }
   interface ShapedArgument {
     /**
@@ -702,12 +708,18 @@ declare namespace Scratch {
      * @link https://docs.penguinmod.com/development/extensions/api/blocks/custom-block-shape/
      */
     shape?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | string;
+
     /**
      * If you added `forceOutputType` to the output blocks, you also need to specify the check property.
      *
      * This ensures that only block with the same shape can be inputted.
      */
     check?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | string;
+
+    /**
+     * Shadows a block from this extension that has a matching opcode into the argument.
+     */
+    fillIn?: string;
   }
   interface CustomArgument extends AbstractArgument<'custom'> {
     id: string;
@@ -717,36 +729,24 @@ declare namespace Scratch {
   interface SoundArgument extends ShapedArgument, AbstractArgument<'sound'> {}
   interface CostumeArgument
     extends ShapedArgument, AbstractArgument<'costume'> {}
-  interface AngleArgument extends ShapedArgument, AbstractArgument<'angle'> {
+  interface AngleArgument
+    extends ShapedArgument, NormalizedArgument, AbstractArgument<'angle'> {
     /**
      * Defaults to 0.
      */
     defaultValue?: string | number;
-
-    /**
-     * If this input should be automaticaly casted to the inputs type.
-     */
-    exemptFromNormalization?: boolean;
   }
   interface BooleanArgument
-    extends ShapedArgument, AbstractArgument<'Boolean'> {
-    /**
-     * If this input should be automaticaly casted to the inputs type.
-     */
-    exemptFromNormalization?: boolean;
-  }
-  interface ColorArgument extends ShapedArgument, AbstractArgument<'color'> {
+    extends ShapedArgument, NormalizedArgument, AbstractArgument<'Boolean'> {}
+  interface ColorArgument
+    extends ShapedArgument, NormalizedArgument, AbstractArgument<'color'> {
     /**
      * Should be a hex color code. No alpha channel supported. Defaults to random color.
      */
     defaultValue?: string | number;
-
-    /**
-     * If this input should be automaticaly casted to the inputs type.
-     */
-    exemptFromNormalization?: boolean;
   }
-  interface NumberArgument extends ShapedArgument, AbstractArgument<'number'> {
+  interface NumberArgument
+    extends ShapedArgument, NormalizedArgument, AbstractArgument<'number'> {
     /**
      * Defaults to 0.
      */
@@ -756,13 +756,9 @@ declare namespace Scratch {
      * The key name of the menu that should take place of this argument.
      */
     menu?: string;
-
-    /**
-     * If this input should be automaticaly casted to the inputs type.
-     */
-    exemptFromNormalization?: boolean;
   }
-  interface StringArgument extends ShapedArgument, AbstractArgument<'string'> {
+  interface StringArgument
+    extends ShapedArgument, NormalizedArgument, AbstractArgument<'string'> {
     /**
      * Defaults to empty string.
      */
@@ -772,24 +768,15 @@ declare namespace Scratch {
      * The key name of the menu that should take place of this argument.
      */
     menu?: string;
-
-    /**
-     * If this input should be automaticaly casted to the inputs type.
-     */
-    exemptFromNormalization?: boolean;
   }
-  interface MatrixArgument extends ShapedArgument, AbstractArgument<'matrix'> {
+  interface MatrixArgument
+    extends ShapedArgument, NormalizedArgument, AbstractArgument<'matrix'> {
     /**
      * Should be a 25 character long string of 1s and 0s.
      * Numbers are technically accepted, but be aware that due to floating point precision, some detail may be lost.
      * Technically optional, but behaves strangely with no default value.
      */
     defaultValue?: string | number;
-
-    /**
-     * If this input should be automaticaly casted to the inputs type.
-     */
-    exemptFromNormalization?: boolean;
 
     /**
      * Determines the width of the matrix.
@@ -805,16 +792,12 @@ declare namespace Scratch {
      */
     matrixHeight?: number;
   }
-  interface NoteArgument extends ShapedArgument, AbstractArgument<'note'> {
+  interface NoteArgument
+    extends ShapedArgument, NormalizedArgument, AbstractArgument<'note'> {
     /**
      * Defaults to 0 ("C (0)")
      */
     defaultValue?: string | number;
-
-    /**
-     * If this input should be automaticaly casted to the inputs type.
-     */
-    exemptFromNormalization?: boolean;
   }
   interface ImageArgument extends AbstractArgument<'image'> {
     /**
@@ -837,24 +820,25 @@ declare namespace Scratch {
      */
     flipRTL?: boolean;
   }
-  interface PolygonArgument
-    extends ShapedArgument, AbstractArgument<'polygon'> {
+  interface PolygonArgument extends AbstractArgument<'polygon'> {
     /**
      * The number of nodes the polygon argument should have.
      */
-    nodes?: number;
+    nodes: number;
 
     /**
      * Defaults to 30.
      */
     defaultSize?: number;
   }
+  interface EmptyArgument extends ShapedArgument, AbstractArgument<undefined> {}
 
   /**
    * Represents an argument for a block.
    */
   type Argument =
     | CustomArgument
+    | EmptyArgument
     | SeparatorArgument
     | CostumeArgument
     | SoundArgument
@@ -914,7 +898,7 @@ declare namespace Scratch {
     overwriteText?: string;
 
     /**
-     * Define a seperate default value.
+     * Define a separate default value.
      */
     createArguments?: Record<string, string>;
   }
@@ -977,6 +961,14 @@ declare namespace Scratch {
      * but still exist for compatibility reasons.
      */
     hideFromPalette?: boolean;
+
+    /**
+     * If true, when used with `fillIn`, this block will be duplicated when dragged,
+     * leaving the original block unaffected.
+     *
+     * When this block is used without `fillIn`, this does not have an effect.
+     */
+    canDragDuplicate?: boolean;
 
     /**
      * This changes the shape of an output block to another block shape.
@@ -1183,7 +1175,7 @@ declare namespace Scratch {
     blockType: 'hat';
 
     /**
-     * Defines if this block, when triggered by function evalutation,
+     * Defines if this block, when triggered by function evaluation,
      * should continue to trigger for every instance the output is true or
      * only trigger on instances where the output has changed to be true.
      *
@@ -1372,7 +1364,7 @@ declare namespace Scratch {
      * Registration needs to be carried out manually.
      * @link https://docs.penguinmod.com/development/extensions/api/categories/field-types/
      */
-    implementation: any;
+    implementation: unknown;
   }
 
   /**
@@ -1433,7 +1425,7 @@ declare namespace Scratch {
     blockIconURI?: string;
 
     /**
-     * If this category should update more regularly due too a seperate set of events,
+     * If this category should update more regularly due too a separate set of events,
      * also states if the orderBlocks function should be carried over
      */
     isDynamic?: boolean;
@@ -1475,7 +1467,7 @@ declare namespace Scratch {
     /**
      * Called when this extension is removed.
      */
-    dispose(): void;
+    dispose?(): void;
   }
 
   /**
