@@ -2,26 +2,18 @@
 // Project: https://github.com/LLK/scratch-blocks
 
 declare namespace ScratchBlocks {
-  class Block {
+  class Block {}
 
-  }
+  class BlockSvg extends Block {}
 
-  class BlockSvg extends Block {
+  interface EventsAbstract {}
 
-  }
-
-  interface EventsAbstract {
-
-  }
-
-  class WorkspaceComment {
-
-  }
+  class WorkspaceComment {}
 
   const enum VariableType {
     Scalar = '',
     List = 'list',
-    Broadcast = 'broadcast_msg'
+    Broadcast = 'broadcast_msg',
   }
 
   class VariableModel {
@@ -30,12 +22,19 @@ declare namespace ScratchBlocks {
     type: VariableType;
     id_: string;
     getId(): string;
-    isLocal: boolean
+    isLocal: boolean;
     isCloud: boolean;
   }
 
   interface VariableModelConstructor {
-    new(workspace: Workspace, name: string, type?: VariableType, id?: string, isLocal?: boolean, isCloud?: boolean): VariableModel;
+    new (
+      workspace: Workspace,
+      name: string,
+      type?: VariableType,
+      id?: string,
+      isLocal?: boolean,
+      isCloud?: boolean,
+    ): VariableModel;
     compareByName(var1: VariableModel, var2: VariableModel): number;
   }
 
@@ -45,9 +44,24 @@ declare namespace ScratchBlocks {
     clear(): void;
     renameVariable(variable: VariableModel, newName: string): void;
     renameVariableById(id: string, newName: string): void;
-    renameVariableAndUses_(variable: VariableModel, newName: string, uses: Block[]): void;
-    renameVariableWithConflict_(variable: VariableModel, newName: string, conflictingVariable: VariableModel, uses: Block[]): void;
-    createVariable(name: string, type?: VariableType, id?: string, isLocal?: boolean, isCloud?: boolean): VariableModel;
+    renameVariableAndUses_(
+      variable: VariableModel,
+      newName: string,
+      uses: Block[],
+    ): void;
+    renameVariableWithConflict_(
+      variable: VariableModel,
+      newName: string,
+      conflictingVariable: VariableModel,
+      uses: Block[],
+    ): void;
+    createVariable(
+      name: string,
+      type?: VariableType,
+      id?: string,
+      isLocal?: boolean,
+      isCloud?: boolean,
+    ): VariableModel;
     deleteVariable(variable: VariableModel): void;
     deleteVariableById(id: string): void;
     deleteVariableInternal_(variable: VariableModel, uses: Block[]): void;
@@ -59,13 +73,9 @@ declare namespace ScratchBlocks {
     getVariableUsesById(id: string): Block[];
   }
 
-  class Flyout {
+  class Flyout {}
 
-  }
-
-  interface WorkspaceOptions {
-    
-  }
+  interface WorkspaceOptions {}
 
   class Workspace {
     id: string;
@@ -104,7 +114,13 @@ declare namespace ScratchBlocks {
     /**
      * @see {VariableMap.createVariable}
      */
-    createVariable(name: string, type?: VariableType, id?: string, isLocal?: boolean, isCloud?: boolean): VariableModel;
+    createVariable(
+      name: string,
+      type?: VariableType,
+      id?: string,
+      isLocal?: boolean,
+      isCloud?: boolean,
+    ): VariableModel;
     /**
      * @see {VariableMap.getVariableUsesById}
      */
@@ -160,19 +176,50 @@ declare namespace ScratchBlocks {
   }
 
   interface WorkspaceConstructor {
-    new(options?: WorkspaceOptions): Workspace;
+    new (options?: WorkspaceOptions): Workspace;
     SCAN_ANGLE: number;
     WorkspaceDB_: Record<string, Workspace>;
     getById(id: string): Workspace | null;
   }
 
-  class WorkspaceSvg extends Workspace {
+  class WorkspaceSvg extends Workspace {}
 
-  }
+  type ModalConfiguration = {
+    title: string;
+    scrollable?: boolean;
+  };
+
+  type ModalStyle = {
+    content?: Partial<CSSStyleDeclaration>;
+    overlay?: Partial<CSSStyleDeclaration>;
+  };
+
+  type ModalButton = {
+    name: string;
+    role?: 'ok' | 'close';
+    class?: 'ok' | 'cancel';
+    style?: Partial<CSSStyleDeclaration>;
+    dontClose?: boolean;
+    callback(): void;
+  };
 
   interface RealBlockly extends BlocklyGlobal {
     Workspace: WorkspaceConstructor;
     WorkspaceSvg: typeof WorkspaceSvg;
+
+    /**
+     * Display a custom ScratchBlocks prompt.
+     *
+     * @param config the modal configuration
+     * @param style the styles to be applied
+     * @param buttons the buttons to display
+     * @link https://docs.penguinmod.com/development/extensions/api/custom-modals/
+     */
+    customPrompt(
+      config: ModalConfiguration,
+      style: ModalStyle,
+      buttons: ModalButton[],
+    ): Promise<HTMLElement>;
   }
 
   interface BlocklyGlobal {
