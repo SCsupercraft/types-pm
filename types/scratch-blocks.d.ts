@@ -211,13 +211,13 @@ declare namespace ScratchBlocks {
      * Display a custom ScratchBlocks prompt.
      *
      * @param config the modal configuration
-     * @param style the styles to be applied
+     * @param style the styles to be applied, if present at least one style must be specified
      * @param buttons the buttons to display
      * @link https://docs.penguinmod.com/development/extensions/api/custom-modals/
      */
     customPrompt(
       config: ModalConfiguration,
-      style: ModalStyle,
+      style: ModalStyle | undefined,
       buttons: ModalButton[],
     ): Promise<HTMLElement>;
   }
