@@ -1436,7 +1436,7 @@ declare namespace Scratch {
      * @param blocks the unordered array of blocks.
      * @returns the ordered array of blocks.
      */
-    orderBlocks?: (blocks: Array<String>) => Array<String>;
+    orderBlocks?(blocks: Array<String>): Array<String>;
 
     /**
      * This is usually not included in most extensions, but you can link to another web page that explains your extension.

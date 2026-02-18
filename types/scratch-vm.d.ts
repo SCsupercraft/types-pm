@@ -1464,28 +1464,28 @@ declare namespace VM {
      *
      * Fallbacks to using `toString` if not present.
      */
-    toReporterContent?: () => HTMLElement;
+    toReporterContent?(): HTMLElement;
 
     /**
      * Inner content for a variable monitor.
      *
      * Fallbacks to using `toReporterContent` if not present.
      */
-    toMonitorContent?: () => HTMLElement;
+    toMonitorContent?(): HTMLElement;
 
     /**
      * Inner content for a single list item.
      *
      * Fallbacks to using `toMonitorContent` if not present.
      */
-    toListItem?: () => HTMLElement;
+    toListItem?(): HTMLElement;
 
     /**
      * String-based representation of this type for the list item editor.
      *
      * Fallbacks to using `toString` if not present.
      */
-    toListEditor?: () => String;
+    toListEditor?(): String;
 
     /**
      * Takes the users edits to the string produced by `toListEditor` and
@@ -1498,7 +1498,7 @@ declare namespace VM {
      *
      * @param edit the edited string representing this type
      */
-    fromListEditor?: (edit: String) => this;
+    fromListEditor?(edit: String): this;
   }
 
   interface Runtime extends EventEmitter<RuntimeEventMap> {
