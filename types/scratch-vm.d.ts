@@ -1440,6 +1440,15 @@ declare namespace VM {
    * A custom type to be used by blocks added by extensions.
    *
    * Can be serialized. Serializers must be registered through the Scratch Runtime.
+   *
+   * @example
+   * class MyCustomType implements VM.SerializableCustomType<'my_custom_type'> {
+   *   customId: 'my_custom_type' = 'my_custom_type';
+   *
+   *   toString() {
+   *     return 'Custom Type';
+   *   }
+   * }
    */
   interface SerializableCustomType<T extends string> extends CustomType {
     /**
@@ -1858,6 +1867,20 @@ declare namespace VM {
      * @param id          the id for the custom type
      * @param serialize   a function to convert the type into serializable JSON (that can be written in a JSON file)
      * @param deserialize a function to convert the JSON back into a instance of the type
+     * @example
+     * class MyCustomType implements VM.SerializableCustomType<'my_custom_type'> {
+     *   customId: 'my_custom_type' = 'my_custom_type';
+     *
+     *   toString() {
+     *     return 'Custom Type';
+     *   }
+     * }
+     *
+     * runtime.registerSerializer<MyCustomType, 'my_custom_type'>(
+     *   'my_custom_type',
+     *   (type: MyCustomType) => null,
+     *   (json: VM.JSONSerializable) => new MyCustomType()
+     * );
      */
     registerSerializer<T extends SerializableCustomType<V>, V extends string>(
       id: T['customId'],

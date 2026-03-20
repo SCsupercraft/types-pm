@@ -218,7 +218,7 @@ declare namespace ScratchBlocks {
     customPrompt(
       config: ModalConfiguration,
       style: ModalStyle | undefined,
-      buttons: ModalButton[],
+      buttons?: ModalButton[],
     ): Promise<HTMLElement>;
   }
 
