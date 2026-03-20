@@ -91,3 +91,18 @@ vm.runtime.registerSerializer<CustomType, 'myType'>(
     return new CustomType();
   },
 );
+
+vm.runtime.registerCompiledExtensionBlocks('myExtension', {
+  ir: {
+    myBlock: (generator, block) => {
+      return {};
+    },
+  },
+  js: {
+    myBlock: (node, compiler, imports) => {
+      const frame = new imports.Frame(false, 'myBlock');
+
+      return new imports.TypedInput('5', imports.TYPE_NUMBER);
+    },
+  },
+});

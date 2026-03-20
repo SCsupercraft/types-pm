@@ -1510,6 +1510,86 @@ declare namespace VM {
     fromListEditor?(edit: String): this;
   }
 
+  /**
+   * A function used by the ir generator to compile blocks.
+   *
+   * @param generator
+   * @param block
+   * @returns the node to pass to the js generator
+   */
+  type IRGeneratorInfoFn = (generator: unknown, block: unknown) => object;
+
+  /**
+   * An object containing information for the ir generator.
+   */
+  type IRGeneratorInfo = {
+    [opcode: string]: IRGeneratorInfoFn;
+  };
+
+  /**
+   * Imports passed from the js generator.
+   */
+  type JSGeneratorImports = {
+    Frame: typeof import('./scratch-vm-compiler.d.ts').Frame;
+    TypedInput: typeof import('./scratch-vm-compiler.d.ts').TypedInput;
+    VariableInput: typeof import('./scratch-vm-compiler.d.ts').VariableInput;
+    ConstantInput: typeof import('./scratch-vm-compiler.d.ts').ConstantInput;
+    VariablePool: typeof import('./scratch-vm-compiler.d.ts').VariablePool;
+
+    /**
+     * A number.
+     *
+     * If there as a possibility of this being `NaN`, use `TYPE_NUMBER_NAN` instead.
+     */
+    TYPE_NUMBER: 1;
+    /**
+     * A string.
+     */
+    TYPE_STRING: 2;
+    /**
+     * A boolean.
+     */
+    TYPE_BOOLEAN: 3;
+    /**
+     * A type unknown at compile-time or a type that
+     * doesn't match any of the other types.
+     */
+    TYPE_UNKNOWN: 4;
+    /**
+     * A type that is either a number or `NaN`.
+     */
+    TYPE_NUMBER_NAN: 5;
+  };
+
+  /**
+   * A function used by the js generator to compile blocks.
+   *
+   * @param node     the node object produced by the ir generator
+   * @param compiler the js generator
+   * @param imports  the js generator imports
+   * @returns an input for anything that returns a value, otherwise should return `void`
+   */
+  type JSGeneratorInfoFn = (
+    node: object,
+    compiler: unknown,
+    imports: JSGeneratorImports,
+  ) => void | import('./scratch-vm-compiler.d.ts').Input;
+
+  /**
+   * An object containing information for the js generator.
+   */
+  type JSGeneratorInfo = {
+    [opcode: string]: JSGeneratorInfoFn;
+  };
+
+  /**
+   * An object containing information for the compiler.
+   */
+  interface CompileInfo {
+    ir: IRGeneratorInfo;
+    js: JSGeneratorInfo;
+  }
+
   interface Runtime extends EventEmitter<RuntimeEventMap> {
     // TW
     threadMap: Map<string, Thread>;
@@ -1886,6 +1966,17 @@ declare namespace VM {
       id: T['customId'],
       serialize: (toSerialize: T) => JSONSerializable,
       deserialize: (fromSerialize: JSONSerializable) => T,
+    ): void;
+
+    /**
+     * Registers compiled extension blocks with the ir and js generators.
+     *
+     * @param extensionId the id of the extension the blocks are from
+     * @param information the information for the compiler
+     */
+    registerCompiledExtensionBlocks(
+      extensionId: string,
+      information: CompileInfo,
     ): void;
   }
 

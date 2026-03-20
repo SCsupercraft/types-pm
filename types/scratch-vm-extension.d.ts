@@ -1468,6 +1468,15 @@ declare namespace Scratch {
      * Called when this extension is removed.
      */
     dispose?(): void;
+
+    /**
+     * A function that returns the extension's compiler info.
+     *
+     * The info will need to be registered manually using `runtime.registerCompiledExtensionBlocks`
+     * and this function doesn't actually have to be called `getCompileInfo`,
+     * it's just common practice.
+     */
+    getCompileInfo?(): VM.CompileInfo;
   }
 
   /**
