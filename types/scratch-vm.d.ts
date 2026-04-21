@@ -1527,41 +1527,6 @@ declare namespace VM {
   };
 
   /**
-   * Imports passed from the js generator.
-   */
-  type JSGeneratorImports = {
-    Frame: typeof import('./scratch-vm-compiler.d.ts').Frame;
-    TypedInput: typeof import('./scratch-vm-compiler.d.ts').TypedInput;
-    VariableInput: typeof import('./scratch-vm-compiler.d.ts').VariableInput;
-    ConstantInput: typeof import('./scratch-vm-compiler.d.ts').ConstantInput;
-    VariablePool: typeof import('./scratch-vm-compiler.d.ts').VariablePool;
-
-    /**
-     * A number.
-     *
-     * If there as a possibility of this being `NaN`, use `TYPE_NUMBER_NAN` instead.
-     */
-    TYPE_NUMBER: 1;
-    /**
-     * A string.
-     */
-    TYPE_STRING: 2;
-    /**
-     * A boolean.
-     */
-    TYPE_BOOLEAN: 3;
-    /**
-     * A type unknown at compile-time or a type that
-     * doesn't match any of the other types.
-     */
-    TYPE_UNKNOWN: 4;
-    /**
-     * A type that is either a number or `NaN`.
-     */
-    TYPE_NUMBER_NAN: 5;
-  };
-
-  /**
    * A function used by the js generator to compile blocks.
    *
    * @param node     the node object produced by the ir generator
@@ -1570,10 +1535,10 @@ declare namespace VM {
    * @returns an input for anything that returns a value, otherwise should return `void`
    */
   type JSGeneratorInfoFn = (
-    node: object,
-    compiler: unknown,
-    imports: JSGeneratorImports,
-  ) => void | import('./scratch-vm-compiler.d.ts').Input;
+    node: { [key: string]: any },
+    compiler: import('./scratch-vm-compiler').JSGenerator,
+    imports: import('./scratch-vm-compiler').JSGeneratorImports,
+  ) => void | import('./scratch-vm-compiler').Input;
 
   /**
    * An object containing information for the js generator.

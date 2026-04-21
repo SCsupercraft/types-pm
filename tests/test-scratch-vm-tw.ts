@@ -95,12 +95,22 @@ vm.runtime.registerSerializer<CustomType, 'myType'>(
 vm.runtime.registerCompiledExtensionBlocks('myExtension', {
   ir: {
     myBlock: (generator, block) => {
-      return {};
+      return { arg: {} };
     },
   },
   js: {
     myBlock: (node, compiler, imports) => {
       const frame = new imports.Frame(false, 'myBlock');
+
+      compiler.pushFrame(frame);
+
+      compiler.descendInput(node.arg).asUnknown();
+
+      const variable = compiler.localVariables.next();
+      compiler.source += `const ${variable} = 3;`;
+      compiler.source += `console.log(${variable});`;
+
+      compiler.popFrame();
 
       return new imports.TypedInput('5', imports.TYPE_NUMBER);
     },
